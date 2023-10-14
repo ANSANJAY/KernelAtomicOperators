@@ -30,3 +30,62 @@
 - 📌 **Atomic Fetch Add/Subtract** = Add/Subtract & Remember the Previous State.
 - 📌 **Compare and Swap** = Cautious, Conditional Updating.
 - 📌 **Exchange** = Swap & Always Remember What Was There Before.
+
+
+
+### Example Output Explanation
+
+Given:
+```c
+pr_info("%s: atomic_fetch_add(2):%d\n", __func__, atomic_fetch_add(2, &val));
+pr_info("%s: atomic_read:%d\n", __func__, atomic_read(&val));
+pr_info("%s: atomic_fetch_sub(1):%d\n", __func__, atomic_fetch_sub(1, &val));
+pr_info("%s: atomic_read:%d\n", __func__, atomic_read(&val));
+pr_info("%s: atomic_cmpxchg(2, 3):%d\n", __func__, atomic_cmpxchg(&val, 2, 3));
+pr_info("%s: atomic_cmpxchg(5, 3):%d\n", __func__, atomic_cmpxchg(&val, 5, 3));
+pr_info("%s: atomic_read:%d\n", __func__, atomic_read(&val));
+pr_info("%s: atomic_xchg(5):%d\n", __func__, atomic_xchg(&val, 5));
+pr_info("%s: atomic_read:%d\n", __func__, atomic_read(&val));
+```
+
+If we assume the `atomic_t val` is initially set to `4`, here is a hypothetical output:
+
+```plaintext
+test_hello_init: Value after initialization:0
+test_hello_init: Value after setting to 4:4
+test_hello_init: atomic_fetch_add(2):4
+test_hello_init: atomic_read:6
+test_hello_init: atomic_fetch_sub(1):6
+test_hello_init: atomic_read:5
+test_hello_init: atomic_cmpxchg(2, 3):5
+test_hello_init: atomic_cmpxchg(5, 3):5
+test_hello_init: atomic_read:3
+test_hello_init: atomic_xchg(5):3
+test_hello_init: atomic_read:5
+```
+
+### Breakdown:
+
+1. **Adding and Reading** 🚀
+   - Fetch add: It was `4`, add `2` to it (`4 + 2 = 6`), return the old value: **Output**: `4`
+   - New value: **Output**: `6`
+
+2. **Subtracting and Reading** 🔽
+   - Fetch subtract: It was `6`, subtract `1` from it (`6 - 1 = 5`), return the old value: **Output**: `6`
+   - New value: **Output**: `5`
+
+3. **Comparing and Swapping** ✅❎
+   - First CAS: Tries to set `3` if it's `2` (which it isn’t), returns current: **Output**: `5`
+   - Second CAS: Tries to set `3` if it's `5` (which it is), returns current: **Output**: `5`
+   - New value (should be `3`): **Output**: `3`
+
+4. **Exchanging** 🔄
+   - Exchange: Swap `3` with `5`, return old (which was `3`): **Output**: `3`
+   - New value (should be `5`): **Output**: `5`
+
+### Note:
+
+- Atomic operations ensure that the predicted output holds even in concurrent environments, preserving data integrity.
+- The returned values in the fetch and CAS operations are essential for understanding the state before the operation, and they help to make decisions in a concurrent scenario (like retrying the operation). 
+
+🚀 Use this example output and the breakdown to correlate with the atomic operations explained previously!
